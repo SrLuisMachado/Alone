@@ -14,6 +14,9 @@ public final class Teclado implements KeyListener{
 	public boolean izquierda;
 	public boolean derecha;
 	
+	//correr
+	public boolean correr;
+	
 	//cerrara la aplicación
 	public boolean cerrar;
 	
@@ -22,6 +25,9 @@ public final class Teclado implements KeyListener{
 		abajo = teclas[KeyEvent.VK_S];
 		izquierda = teclas[KeyEvent.VK_A];
 		derecha = teclas[KeyEvent.VK_D];
+		
+		correr = teclas[KeyEvent.VK_SHIFT];
+		
 		cerrar = teclas[KeyEvent.VK_ESCAPE];
 	}
 	
