@@ -13,16 +13,19 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 import control.Teclado;
+import entes.criatura.Jugador;
 import graficos.Pantalla;
+import graficos.Sprite;
 import mapa.Mapa;
+import mapa.MapaCargado;
 import mapa.MapaGenerado;
 
 public class Juego extends Canvas implements Runnable{
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final int ANCHO = 800;
-	private static final int ALTO = 600;
+	private static final int ANCHO = 600;
+	private static final int ALTO = 400;
 	
 	private static volatile boolean funcionando = false;
 	
@@ -36,15 +39,13 @@ public class Juego extends Canvas implements Runnable{
 	private static int aps = 0;
 	private static int fps = 0;
 	
-	private static int x = 0;
-	private static int y = 0;
-	
 	private static JFrame ventana;
 	private static Thread Hilo;
 	private static Teclado teclado;
 	private static Pantalla pantalla;
 	
 	private static Mapa mapa;
+	private static Jugador jugador;
 	
 	//acceder a la imagen en forma de array de pixeles que devuelve un array de int
 	private static BufferedImage imagen = new BufferedImage(ANCHO, ALTO, BufferedImage.TYPE_INT_RGB);
@@ -59,11 +60,13 @@ public class Juego extends Canvas implements Runnable{
 		
 		pantalla = new Pantalla(ANCHO, ALTO);
 		
-		//se refiere a que el mapa sera de 128x128 tiles(cuadros)
-		mapa = new MapaGenerado(128, 128);
-		
 		teclado = new Teclado();
 		addKeyListener(teclado);
+		
+		//se refiere a que el mapa sera de 128x128 tiles(cuadros)
+				//mapa = new MapaGenerado(128, 128);
+		mapa = new MapaCargado("/mapas/Mapa1.png");
+		jugador = new Jugador(mapa, teclado, Sprite.Abajo0, 215, 127);
 		
 		ventana = new JFrame(NOMBRE);
 		ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,7 +89,7 @@ public class Juego extends Canvas implements Runnable{
 	}
 	
 	private synchronized void iniciar() {
-		funcionando =true;
+		funcionando = true;
 		
 		Hilo = new Thread(this,"Graficos");
 		Hilo.start();
@@ -105,18 +108,19 @@ public class Juego extends Canvas implements Runnable{
 	private void actualizar() {
 		teclado.actualizar();
 		
-		if(teclado.arriba) {
-			y--;
-		}
-		if(teclado.abajo) {
-			y++;
-		}
-		if(teclado.izquierda) {
-			x--;
-		}
-		if(teclado.derecha) {
-			x++;
-		}
+		jugador.actualizar();
+//		if(teclado.arriba) {
+//			y--;
+//		}
+//		if(teclado.abajo) {
+//			y++;
+//		}
+//		if(teclado.izquierda) {
+//			x--;
+//		}
+//		if(teclado.derecha) {
+//			x++;
+//		}
 		if(teclado.cerrar) {
 			System.exit(0);
 		}
@@ -133,8 +137,8 @@ public class Juego extends Canvas implements Runnable{
 		}
 		
 		pantalla.limpiar();
-		mapa.motrar(x, y, pantalla);
-		
+		mapa.motrar(jugador.getPosicionX()- pantalla.getAncho()/2 + jugador.getSprite().getTamanyo()/2, jugador.getPosicionY() - pantalla.getAlto()/2 + jugador.getSprite().getTamanyo()/2, pantalla);
+		jugador.mostrar(pantalla);
 		System.arraycopy(pantalla.pixeles, 0, pixeles, 0, pixeles.length);
 		//comentado por que para ordenadores antiguos va mal, la línea de arriba lo sustituye
 //		for(int i = 0; i < pixeles.length;i++) {
@@ -145,14 +149,16 @@ public class Juego extends Canvas implements Runnable{
 		Graphics g = estrategia.getDrawGraphics();
 		g.drawImage(imagen, 0, 0, getWidth(), getHeight(), null);
 		//pone un cuadro blanco de 32 x 32 pixeles en e centre(avatar)
-		g.setColor(Color.white);
-		g.fillRect(ANCHO/2, ALTO/2, 32, 32);
+		g.setColor(Color.red);
+		//g.fillRect(ANCHO/2, ALTO/2, 32, 32);
 		
 		//MOSTRARA EL CONTADOR APS EN LA POSICION 10 px a la derecha, 20 px hacia abajo de la esquina superior izquierda
 		g.drawString(CONTADOR_APS, 10, 20);
 		//MOSTRARA EL CONTADOR APS EN LA POSICION 10 px a la derecha, 35 px hacia abajo de la esquina superior izquierda
 		g.drawString(CONTADOR_FPS, 10, 35);
-		
+		//dibujar posicion
+		g.drawString("x :" +jugador.getPosicionX(), 10, 50);
+		g.drawString("x :" +jugador.getPosicionY(), 10, 65);
 		//destruye la memoria de g
 		g.dispose();
 		
@@ -163,7 +169,7 @@ public class Juego extends Canvas implements Runnable{
 	
 	public void run() {
 		final int NANOSEGUNDOS_POR_SEGUNDO =1000000000;
-		final byte ACTUALIZACION_POR_SEGUNDO = 120;
+		final byte ACTUALIZACION_POR_SEGUNDO = 80;
 		final double NS_POR_ACTUALIZACION = NANOSEGUNDOS_POR_SEGUNDO/ACTUALIZACION_POR_SEGUNDO;
 		
 		long referenciaActualizacion = System.nanoTime();
